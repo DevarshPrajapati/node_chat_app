@@ -10,7 +10,7 @@ const mongoose = require('mongoose');
 const multer = require("multer")
 const bodyParser = require('body-parser');
 const fs = require("fs")
-//Database connection
+//Database 
 app.set('view engine', 'ejs');
 const messages = require('./model/message');
 const connection = require("./config/connection")
