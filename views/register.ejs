@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Register | Form</title>
+  <link rel="stylesheet" href="../Register_Login.css">
+</head>
+
+<body>
+  <form id="signupForm" action="/register" method="post" enctype="multipart/form-data">
+    <!-- // -->
+    <div class="containers" id="signupcontainer">
+      <input type="checkbox" id="check">
+      <div class="registration form" style="padding: 20px;">
+        <header>Signup</header>
+
+        <img class="image" alt="profile Pic" src="https://d30y9cdsu7xlg0.cloudfront.net/png/138926-200.png"
+          id="profile-image1" height="200">
+        <input style="padding-top: 12.5px;" id="profile-image-upload" class="" name="Profile" type="file" onchange="previewFile()" required/>
+        <!-- <div style="color:#999;"> </div> -->
+        <!-- // -->
+        <input type="text" name="username" id="name" placeholder="Enter your Name" required>
+        <input type="email" name="email" id="email" placeholder="Enter your email" required>
+        <input type="password" name="password" id="password" placeholder="Enter your password" required>
+        <input type="contactnumber" name="contactnumber" id="contactnumber" placeholder="Enter your contactnumber"
+          required>
+        <div class="radiobtn">
+          <label>Gender:</label>
+          <input type="radio" name="Gender" value="Male" id="male">Male
+          <input type="radio" name="Gender" value="Female" id="female">Female
+        </div>
+        <input type="button" class="button" value="Signup" id="signupButton">
+        <!-- </div> -->
+  </form>
+  <div class="signup">
+    <span class="signup">Already have an account?
+      <a href="/login">Login</a>
+    </span>
+  </div>
+  </div>
+  </div>
+
+  <script>
+    // const connection = require('./config/connection')
+    // const users = require("./model/registermodel")
+    document.getElementById("signupButton").addEventListener("click", function () {
+      var name = document.getElementById("name").value;
+      var email = document.getElementById("email").value;
+      var password = document.getElementById("password").value;
+      var contactnumber = document.getElementById("contactnumber").value;
+      var fileInput = document.getElementById('profile-image-upload').value;
+
+      if (fileInput === "" ) {
+        alert("Please upload your profile picutre");
+        return;
+      }
+
+      if (name === "" || email === "" || password === "" || contactnumber === "") {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        alert("Please enter a valid email address.");
+        return;
+      }
+
+      if (password.length < 4) {
+        alert("Password must be at least 4 characters long.");
+        return;
+      }
+
+      if (contactnumber.length < 10) {
+        alert("contactnumber must be 10 Numbers long.");
+        return;
+      }
+
+      if (contactnumber.length > 10) {
+        alert("contactnumber must be 10 Numbers long.");
+        return;
+      }
+
+      // if (contactnumber.type = String) {
+      //     alert("contactnumber must be Number");
+      //     return;
+      // }
+
+
+      // If all validations pass, submit the form
+      document.getElementById("signupForm").submit();
+    });
+
+
+    function isValidEmail(email) {
+      var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailPattern.test(email);
+    }
+
+    function previewFile() {
+      var preview = document.getElementById('profile-image1');
+      var fileInput = document.getElementById('profile-image-upload');
+      var file = fileInput.files[0];
+
+      if (file) {
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+        }
+
+        reader.readAsDataURL(file);
+      }
+    }
+//       const regusers = new  users ({ name, email, password });
+// regusers.save();
+
+
+
+  </script>
+
+</body>
+
+</html>

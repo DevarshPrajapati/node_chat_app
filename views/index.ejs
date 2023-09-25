@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat App</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+  <!-- <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet"/> -->
+</head>
+
+<body>
+
+  <div class="app">
+    <a  id="logout"  href="/logout">logout</a>
+    <!-- <div class="screen join-screen active">
+      <h2>Join Chatroom</h2>
+      <div class="form-input">
+        <label for="">Username</label>
+        <input type="text" id="username" placeholder="Enter your username">
+      </div>
+      <div class="form-input">
+        <button id="join-user">Login</button>
+        <a href="GroupChat.html"><button id="roombutton">Create Group</button></a>
+        
+      </div>
+    </div> -->
+    
+  
+    <div class="active_user">
+      <div class="d1">
+
+        <% if (username) { %>
+          <div style="display: flex; justify-content: center;" >
+          <h2 style=" margin-right: 10px;"> Welcome</h2> 
+          <h2 id="welcome-message">  <%= username %></h2>
+           </div>
+          <% } %>
+          <div id="typingStatus"></div>
+
+          
+          <!-- <h1 class="timepass"></h1> -->
+          <h2 style=" border-bottom: 3px solid #000000; background-color: rgb(42, 41, 41); color: white; padding-top: 7px; padding-bottom: 7px;"><a href="/GroupChat"><button id="roombutton">Create Group</button></a></h2>
+          <!-- <button  class="user-link"><%= username %></button> -->
+          <ul id="user-list"></ul>
+        </div>  
+        
+        <div class="d2">
+        
+
+        <div id="chat-box">
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <script src="client.js"></script>
+      <script src="/socket.io/socket.io.js"></script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Login | Chat</title>
+  <link rel="stylesheet" href="../Register_Login.css">
+</head>
+<body>
+  <div class="container">
+    <input type="checkbox" id="check">
+    <div class="login form">
+      <header>Login</header>
+      <form id="loginForm" action="/login" method="post">
+        <input type="name" name="username" id="username" placeholder="Enter your name" required>
+        <input type="password" name="password" id="password" placeholder="Enter your password" required>
+        <!-- <a href="#">Forgot password?</a> -->
+        <input type="submit" class="button" value="Login" id="loginButton">
+    </form>
+      <div class="signup">
+        <span class="signup">Don't have an account?
+         <a href="/register">Signup</a>
+        </span>
+      </div>
+    </div>
+   
+  </div>
+
+  <script>
+    document.getElementById("loginButton").addEventListener("click", function () {
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+
+        if (username === "" || password === "") {
+            alert("Please fill in all fields.");
+            return;
+        }
+
+        // if (username.length < 3) {
+        //     alert("Username must be at least 3 characters long.");
+        //     return;
+        // }
+
+        // if (password.length < 4) {
+        //     alert("Password must be at least 4 characters long.");
+        //     return;
+        // }
+
+        // If all validations pass, submit the form
+        document.getElementById("loginForm").submit();
+    });
+    
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" type="text/css" href="style.css">
+
+  <title>Group</title>
+</head>
+
+<body>
+  <div class="app">
+    <a id="logout" href="/logout">logout</a>
+
+    <div class="active_user">
+      <div class="d3">
+        <h2
+          style=" border-bottom: 3px solid #007bff; background-color: #007bff; color: white; padding-top: 10px; padding-bottom: 7px;">
+          Group Chat</h2>
+        <ul id="user_list"></ul>
+        <div style="display: flex; justify-content: center;">
+          <h2 style=" margin-right: 10px;"> Welcome</h2>
+          <h2 id="group_user">
+            <%= username%>
+          </h2>
+        </div>
+        <form id="create-group-form" class="create1">
+          <input type="text" id="group-name" placeholder="Enter group name">
+          <button id="group_btn" type="submit">Create Group</button>
+        </form>
+        <ul id="room_list"></ul>
+        <ul id="rooms_list"></ul>
+        <h2
+          style=" border-bottom: 3px solid #000000; background-color: rgb(42, 41, 41); color: white; padding-top: 10px; padding-bottom: 7px;">
+          Available users</h2>
+        <ul id="user_lists">
+        </ul>
+      </div>
+      <div class="d2">
+        <div id="username-display"></div>
+        <div id="room_box"></div>
+      </div>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const userList = document.getElementById('user_list');
+    const roomBox = document.getElementById('room_box');
+    const roombutton = document.getElementById('roombutton');
+    const roomform = document.getElementById('create-group-form');
+    const roomname = document.getElementById('group-name')
+    const roomlist = document.getElementById('room_list')
+    const roomslist = document.getElementById('rooms_list')
+    const user = document.getElementById("group_user")
+    const username = user.innerText
+    console.log(username);
+    const roomnametext = roomname.value;
+    // let username = ""
+    roomform.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const roomnamevalue = roomname.value;
+      if (roomnamevalue.trim() !== '') {
+        socket.emit('Create_room', roomnamevalue, username);
+        roomname.value = '';
+      }
+    });
+
+    
+    // const userListElement = document.getElementById('user_lists');
+    //
+    // socket.on('room_users', (userList) => {
+    //   // Clear the user list element
+    //   userListElement.innerHTML = '';
+
+    //   userList.forEach((user) => {
+    //     const userItem = document.createElement('li');
+    //     userItem.textContent = user;
+    //     userListElement.appendChild(userItem);
+    //   });
+    // });
+
+
+    //     socket.on('rooms_list',async(room)=>{
+    //       const list = document.createElement('li');
+    //       list.innerHTML=`<button class="group_link">${room}</button>`
+    //       roomlist.appendChild(list)
+    //   console.log("worked");
+    // })
+
+function temp() {
+  const groupLinks = document.querySelectorAll('.group_link');
+      groupLinks.forEach((link) => {
+        link.addEventListener('click', async () => {
+          //  username = prompt("Enter your name here!")
+          const sender = username  
+          if (username) {
+            const targetroom = link.innerText;
+            socket.emit('join_room', targetroom, sender);
+            console.log(targetroom,"targetroom",sender,"sender");
+
+            roomBox.innerHTML = `<h2 style=" border-bottom: 3px solid #000000; background-color: rgb(42, 41, 41); color: white; padding-top: 10px; padding-bottom: 7px">
+                        ${targetroom} Group</h2>
+                        <ul id="group_msg_list"></ul>
+                        <div class="typearea">  
+                            <input type="text" id="group_msg_input" placeholder="Type a message">
+                            <button id="group_send_button">Send</button> 
+                        </div>`;
+            link.classList.add('clicked');
+            const groupmsgList = document.getElementById('group_msg_list');
+            const groupmsgInput = document.getElementById('group_msg_input');
+            const groupsendButton = document.getElementById('group_send_button');
+            //chat_history
+            try {
+              const server_response = await fetch('/Group_chat_history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sender: username, targetroom: targetroom }),
+              });
+
+              if (server_response.ok) {
+                const messageData = await server_response.json();
+                messageData.forEach((message) => {
+                  const messageItem = document.createElement('li');
+                  // const messageClass = message.sender === username ? 'mychat' : 'yourchat';
+                  // messageItem.className = messageClass;
+                  // messageItem.textContent = `${message.sender}: ${message.roommessage}`;
+                  if (message.sender === username) {
+                    // Display messages sent by the current user
+                    messageItem.className = "mychat"
+                    messageItem.innerHTML = `${message.roommessage}<strong>:You</strong>`;
+                  }
+                  else {
+                    // Display messages sent by other users in the group
+                    messageItem.className = "yourchat"
+                    messageItem.innerHTML = `<strong>${message.sender}:</strong> ${message.roommessage}`;
+                  }
+                  groupmsgList.appendChild(messageItem);
+                });
+                // Scroll to the bottom of the groupmsgList
+                groupmsgList.scrollTop = groupmsgList.scrollHeight;
+              } else {
+                console.error('Failed to fetch chat history');
+              }
+            } catch (error) {
+              console.error('Error fetching chat history:', error);
+            }
+            groupsendButton.addEventListener('click', () => {
+              console.log("sended");
+              const roommessage = groupmsgInput.value;
+              if (roommessage.trim() !== '') {
+                socket.emit('Send_message', { targetroom: targetroom, sender: username, roommessage: roommessage });
+                console.log(targetroom,sender,roommessage);
+                console.log("log_messages");
+                // socket.emit('room_message', { targetroom, roommessage });
+                // groupmsgList.innerHTML += `<li class="mychat"><strong>You:</strong> ${roommessage}</li>`;     
+                groupmsgInput.value = '';
+                groupmsgList.scrollTop = groupmsgList.scrollHeight;
+              }      
+            });
+          }
+        });
+      });      
+}
+
+    socket.on('room_list', async (rooms) => {
+      try {
+        const response = await fetch('/get_groups', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomname: roomnametext }),
+        });
+
+        if (response.ok) {
+          const receiversList = await response.json();
+          // const receiversListElement = document.getElementById('receivers-list');
+          // const groupLinks = document.querySelectorAll('.group_link');
+          // groupLinks.innerHTML = '';
+
+          receiversList.forEach(receiver => {
+            const receiverItem = document.createElement('li');
+            receiverItem.innerHTML = `<button class="group_link">${receiver}</button>`
+            roomlist.appendChild(receiverItem);
+          });
+          console.log("appended");
+        } else {
+          console.error('Failed to fetch receivers list');
+        }
+      } catch (error) {
+        console.error('Error fetching receivers list:', error);
+      }
+
+ 
+      temp()
+    });
+
+      socket.on('creating_group', async (rooms) => {
+        const list = document.createElement('li');
+        list.innerHTML = `<button class="group_link">${rooms}</button>`
+        roomlist.appendChild(list)
+        console.log("worked");
+        temp()
+
+      });
+   
+
+
+      // socket.emit('group_message', { groupName: targetGroup,sender:username, message: groupMessage });
+socket.on('room_message', ({ sender, roommessage }) => {
+            console.log("receiving message");
+            console.log(sender,roommessage);
+const groupmsgList = document.getElementById('group_msg_list');
+
+if (sender != username) {
+  groupmsgList.innerHTML += `<li class="yourchat"><strong> ${sender}:</strong> ${roommessage}</li>`;
+}
+else {
+  groupmsgList.innerHTML += `<li class="mychat">${roommessage}<strong>:you</strong> </li>`;
+  console.log("other");
+}
+roomBox.scrollTop = roomBox.scrollHeight;
+});
+
+
+  </script>
+</body>
+</html>
