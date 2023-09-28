@@ -154,7 +154,7 @@ app.post('/confirm_password',async (req, res) => {
   const otpTime = user.otpTimestamp;
   const current_time = new Date();
   const otptime_limit = new Date(otpTime.getTime() + 60000);
-  
+
   if (otp !== user.otp) {
     return res.status(400).send('Invalid OTP');
   }else if (current_time > otptime_limit) {
@@ -164,7 +164,6 @@ app.post('/confirm_password',async (req, res) => {
   const hashedPassword = await bcrypt.hash(new_password, 10);
   await User.updateOne({ email }, { password: hashedPassword, otp: null });
   res.render("login")
-
 })
 
 
