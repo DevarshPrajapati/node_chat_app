@@ -229,7 +229,7 @@ socket.on('send_message', async ({ targetUser, message }) => {
     const targetSocketId = Object.keys(activeUsers).find(
       (socketId) => activeUsers[socketId] === targetUser
     );
-    console.log(targetSocketId);
+    
     //     console.log(socket.id,"sender");
     // console.log(targetSocketId,"receiversid");
     if (targetSocketId) {
