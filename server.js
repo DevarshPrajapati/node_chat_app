@@ -17,10 +17,13 @@ const connection = require("./config/connection")
 const GroupMsg = require("./model/groupmsg")
 const groups = require("./model/Groups")
 const User = require("./model/userSchema")
-
+const msg_img = require("./model/img_msg")
+const nodemailer = require("nodemailer")
 const jwt = require("jsonwebtoken")
 const config = require("./config/secretkey")
 const bcrypt = require("bcrypt");
+const { name } = require('ejs');
+const otpGenerator = require('otp-generator');
 //
 app.use(express.static(path.join(__dirname + "/public")))
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -60,10 +63,12 @@ app.get('/register', (req, res) => {
 app.post('/register', upload.single('Profile'), async (req, res) => {
   const { username, email, password, contactnumber, Gender } = req.body;
   const hashedpassword = await bcrypt.hash(password, 12)
+
   //   const newuser = register.create({
   //     password:hashedpassword,
   //     contactnumber
   // })
+
   const user = new User({
     username,
     email,
@@ -73,14 +78,105 @@ app.post('/register', upload.single('Profile'), async (req, res) => {
     Profile: req.file.filename
   });
   await user.save();
+
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    auth: {
+        user: 'ruth46@ethereal.email',
+        pass: 'dXMrZEkSCexVQZ9KuM'
+    }
+});
+
+const mailOptions = {
+  from: 'chatApplication@gmail.com',
+  to: email,
+  subject: 'Welcome mail',
+  text: `Welcome ${username} ,thank for registering`
+};
+
+const info = await transporter.sendMail(mailOptions);
+console.log("Registered");
   res.redirect('/login');
 });
+
+
+app.post('/reset_password',async (req, res) => {
+  const { email } = req.body;
+  const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false });
+console.log(otp);
+
+const user = await User.findOneAndUpdate(
+  { email },
+  { $set: { otp, otpTimestamp: new Date() } },
+  { new: true }
+);
+
+if (!user) {
+  return res.status(404).send('User not found');
+}
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    auth: {
+        user: 'ruth46@ethereal.email',
+        pass: 'dXMrZEkSCexVQZ9KuM'
+    }
+});
+const mailOptions = {
+  from: 'chatApplication@email.com',
+  to: email,
+  subject: 'Password Reset OTP',
+  text: `Your OTP for password reset is: ${otp}`,
+};
+
+transporter.sendMail(mailOptions, (error, info) => {
+  if (error) {
+    console.error(error);
+    res.status(500).send('Error sending OTP email');
+  } else {
+    res.send('OTP sent to your email');
+  }
+});
+
+  res.render('reset_password');
+});
+
+
+app.post('/confirm_password',async (req, res) => {
+  const {otp,email,new_password } = req.body;
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return res.status(404).send('User not found');
+  }
+
+  const otpTime = user.otpTimestamp;
+  const current_time = new Date();
+  const otptime_limit = new Date(otpTime.getTime() + 60000);
+  
+  if (otp !== user.otp) {
+    return res.status(400).send('Invalid OTP');
+  }else if (current_time > otptime_limit) {
+    return res.status(400).send('expired OTP');
+  }
+
+  const hashedPassword = await bcrypt.hash(new_password, 10);
+  await User.updateOne({ email }, { password: hashedPassword, otp: null });
+  res.render("login")
+
+})
 
 
 
 app.get('/login', (req, res) => {
   res.render('login');
 });
+
+app.get('/forgot_password', (req, res) => {
+  res.render('forgot_password');
+});
+
 const createtoken = async (id) => {
   try {
     const token = await jwt.sign({ _id: id }, config.secret)
@@ -90,12 +186,14 @@ const createtoken = async (id) => {
   }
 }
 app.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  const user = await User.findOne({ username });
+  const { email, password } = req.body;
+  const user = await User.findOne({ email });
+  
   //  if (!user) {
   // console.log("user not found");
   //  res.redirect('/login');
   //  }
+
   if (user) {
     const passwordmatch = await bcrypt.compare(password, user.password);
     if (passwordmatch) {
@@ -163,6 +261,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('_video', ({dataURL,targetUser}) => {
+    // console.log(dataURL);
     console.log("video from server worked");
     const sender = activeUsers[socket.id];
     const receiver = targetUser;
@@ -177,29 +276,34 @@ io.on('connection', (socket) => {
    
     fs.writeFile(filePath, data, 'base64', (err) => {
       if (err) {
-        console.error(err);
+        console.error(err); 
       } else {
         console.log('video saved:', fileName);
         if (targetSocketId) {
           console.log("id for video found");
-          socket.to(targetSocketId).emit('receive_video', '/videos/' + fileName);
         }
       }
     });
+    socket.to(targetSocketId).emit('receive_video', '/videos/' + fileName);
+ 
   });
 
 
-socket.on('send_image', ({dataURL,targetUser}) => {
-  console.log("image worked");
+socket.on('send_image',async ({dataURL,targetUser}) => {
   const sender = activeUsers[socket.id];
   const receiver = targetUser;
   // console.log(sender,receiver,dataURL);
+
   const fileName = `image-${Date.now()}.png`;
   const filePath = __dirname + '/public/images/' + fileName;
   const data = dataURL.replace(/^data:image\/png;base64,/, '');
   const targetSocketId = Object.keys(activeUsers).find(
     (socketId) => activeUsers[socketId] === targetUser
   );
+
+ const message_img = new msg_img({ sender, receiver,dataURL,image:fileName });
+    await message_img.save();
+        
   fs.writeFile(filePath, data, 'base64', (err) => {
     if (err) {
       console.error(err);
@@ -279,6 +383,28 @@ socket.on('send_message', async ({ targetUser, message }) => {
     } catch (error) {
       console.error('Error fetching chat history:', error);
       res.status(500).json({ error: 'Error fetching chat history' });
+    }
+  });
+
+  app.post('/image_history', async (req, res) => {
+    const { sender, receiver } = req.body;
+    // console.log(sender,receiver);
+
+    if (!sender || !receiver) {
+      return res.status(400).json({ error: 'Invalid sender or receiver' });
+    }
+    try {
+      const image_history = await msg_img.find({
+        $or: [
+          { sender: sender, receiver: receiver },
+          { sender: receiver, receiver: sender },
+        ],
+      }).sort({ createdAt: 1 });
+      // console.log(image_history)
+      res.json(image_history);
+    } catch (error) {
+      console.error('Error fetching image history:', error);
+      res.status(500).json({ error: 'Error fetching image history' });
     }
   });
 
@@ -382,3 +508,6 @@ const PORT = 5000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+
+

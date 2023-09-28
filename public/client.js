@@ -1,4 +1,5 @@
 // (async function () {
+
 document.addEventListener('DOMContentLoaded', function () {
   const app = document.querySelector(".app");
   const userList = document.getElementById('user-list');
@@ -11,9 +12,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const user_name = welcomeMessage.innerText;
   console.log(user_name, "usernames");
   socket.emit('user_connected', user_name);
-
-  //  const timepass=document.querySelector(".timepass")
-  //  timepass.innerHTML="<%= username %>"
 
   socket.on('connect',async () => {
     console.log('Connected to server');
@@ -84,7 +82,6 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>`;
 
 
-
         link.classList.add('clicked');
         const messageList = document.getElementById('message-list');
         const messageInput = document.getElementById('message-input');
@@ -121,6 +118,9 @@ document.addEventListener('DOMContentLoaded', function () {
           console.error('Error fetching chat history:', error);
         }
 
+        
+        
+
         //Image Share
         const imgtag = document.getElementById("img")
         sendButton.addEventListener('click', () => {
@@ -131,7 +131,6 @@ document.addEventListener('DOMContentLoaded', function () {
             messageInput.value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
           }
-
           const file = imgtag.files[0];
           if (file) {
             const reader = new FileReader();
@@ -167,13 +166,55 @@ document.addEventListener('DOMContentLoaded', function () {
             chatBox.scrollTop = chatBox.scrollHeight;
           }
         });
+////////////////////////////////
+try {
+  const server_response = await fetch('/image_history', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sender: user_name, receiver: targetUser }),
+  });
 
+  if (server_response.ok) {
+    const imageData = await server_response.json();
+    imageData.forEach((image) => {
+      const messageItem = document.createElement('li');
+      if (image.sender === user_name) {
+        var sended_li = document.createElement('li');
+        sended_li.classList.add("sended_li_img");
+        var sended_img = document.createElement('img');
+        sended_img.style.width = '300px';
+        sended_img.style.height = '200px';
+        sended_img.src = image.dataURL;
+        sended_li.appendChild(sended_img);
+        messageList.appendChild(sended_li);
+      }
+      else {
+        var received_li = document.createElement('li');
+          received_li.classList.add("received_li_img");
+            console.log("file type is image");
+          var received_img = document.createElement('img');
+          received_img.style.width = '300px';
+          received_img.style.height = '200px';
+          received_img.src = image.dataURL;
+          received_li.appendChild(received_img);
+          messageList.appendChild(received_li)
+      }
+      // messageList.appendChild(messageItem);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+  } else {
+    console.error('Failed to fetch image history');
+  }
+} catch (error) {
+  console.error('Error fetching image history:', error);
+}
+        /////////////////////
         socket.on('receive_image', (dataURL) => {
           // console.log(dataURL);
-          var received_li = document.createElement('li')
-          received_li.classList.add("received_li_img")
+          var received_li = document.createElement('li');
+          received_li.classList.add("received_li_img");
             console.log("file type is image");
-          var received_img = document.createElement('img')
+          var received_img = document.createElement('img');
           received_img.style.width = '300px';
           received_img.style.height = '200px';
           received_img.src = dataURL;
@@ -187,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function () {
           console.log(dataURL);
           var received_li = document.createElement('li')
           received_li.classList.add("received_li_img")
-            console.log("file type is video");
             var received_video = document.createElement('video');
             received_video.style.width = '300px';
             received_video.style.height = '200px';
@@ -197,16 +237,16 @@ document.addEventListener('DOMContentLoaded', function () {
           messageList.appendChild(received_li);
           chatBox.scrollTop = chatBox.scrollHeight;
         });
+
         socket.on('receive_message', ({ sender, message }) => {
           if (sender === targetUser) {
             messageList.innerHTML += `<li class="yourchat"><strong>${sender}:</strong> ${message}</li>`;
             chatBox.scrollTop = chatBox.scrollHeight;
           }
-        });
-
+        }); 
+        
         const typingStatus = document.getElementById('typingStatus');
         let typingTimeout;
-
         messageInput.addEventListener('keyup', (e) => {
           clearTimeout(typingTimeout);
           socket.emit('typing', targetUser);
@@ -225,9 +265,9 @@ document.addEventListener('DOMContentLoaded', function () {
         socket.on('user_stopped_typing', () => {
           typingStatus.innerHTML = '';
         });
+
       });
     });
   });
-
 });
 // })();

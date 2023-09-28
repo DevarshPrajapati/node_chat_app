@@ -6,6 +6,9 @@ const usersSchema = new mongoose.Schema({
     contactnumber:Number, 
     Gender: String, 
     Profile:String, 
+    otp:{type:String,default:null},
+    otpTimestamp: { type: Date,
+        default: Date.now } ,
     createdAt: { type: Date,
         default: Date.now }  
 })
